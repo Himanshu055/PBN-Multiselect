@@ -317,40 +317,60 @@ export class Multiselect extends React.Component<IMultiselectProps, any> {
     }
   }
 
-  onSelectItem(item) {
-    const { selectedValues } = this.state;
-    const { selectionLimit, onSelect, singleSelect, showCheckbox } = this.props;
-    if (!this.state.keepSearchTerm){
-      this.setState({
-        inputValue: ''
+// ... (existing code)
+
+onSelectItem(item) {
+  const { isObject, displayValue, groupBy, singleSelect } = this.props;
+  const { selectedValues, groupedObject } = this.state;
+
+  if (typeof item === 'string' && groupBy) {
+   
+    const groupItems = groupedObject[item] || [];
+    
+    if (singleSelect) {
+      
+      this.setState({ selectedValues: groupItems }, () => {
+        this.removeSelectedValuesFromOptions(true);
+      });
+    } else {
+      
+      groupItems.forEach(groupItem => {
+        if (!this.isSelectedValue(groupItem)) {
+          selectedValues.push(groupItem);
+        } else {
+          const index = selectedValues.findIndex(
+            i => i[displayValue] === groupItem[displayValue]
+          );
+          selectedValues.splice(index, 1);
+        }
+      });
+      this.setState({ selectedValues }, () => {
+        this.removeSelectedValuesFromOptions(true);
       });
     }
-    if (singleSelect) {
-      this.onSingleSelect(item);
-      onSelect([item], item);
-      return;
+  } else {
+    
+    if (!this.isSelectedValue(item)) {
+      selectedValues.push(item);
+    } else {
+      const index = selectedValues.findIndex(
+        i => i[displayValue] === item[displayValue]
+      );
+      selectedValues.splice(index, 1);
     }
-    if (this.isSelectedValue(item)) {
-      this.onRemoveSelectedItem(item);
-      return;
-    }
-    if (selectionLimit == selectedValues.length) {
-      return;
-    }
-		selectedValues.push(item);
-		onSelect(selectedValues, item);
+
+   
     this.setState({ selectedValues }, () => {
-      if (!showCheckbox) {
-				this.removeSelectedValuesFromOptions(true);
-      } else {
-        this.filterOptionsByInput();
-      }
+      this.removeSelectedValuesFromOptions(true);
     });
-    if (!this.props.closeOnSelect) {
-      // @ts-ignore
-      this.searchBox.current.focus();
-    }
   }
+}
+
+
+
+  
+  
+  
 
   onSingleSelect(item) {
     this.setState({ selectedValues: [item], toggleOptionsList: false });
@@ -390,36 +410,41 @@ export class Multiselect extends React.Component<IMultiselectProps, any> {
   renderGroupByOptions() {
     const { isObject = false, displayValue, showCheckbox, style, singleSelect } = this.props;
     const { groupedObject } = this.state;
-    return Object.keys(groupedObject).map(obj => {
-			return (
-				<React.Fragment key={obj}>
-					<li className="groupHeading" style={style['groupHeading']}>{obj}</li>
-					{groupedObject[obj].map((option, i) => {
-            const isSelected = this.isSelectedValue(option);
-            return (
-              <li
-                key={`option${i}`}
-                style={style['option']}
-                className={`groupChildEle option ${isSelected ? 'selected' : ''} ${this.fadeOutSelection(option) ? 'disableSelection' : ''} ${this.isDisablePreSelectedValues(option) ? 'disableSelection' : ''}`}
-                onClick={() => this.onSelectItem(option)}
-              >
-                {showCheckbox && !singleSelect && (
-                    <input
-                      type="checkbox"
-                      className={'checkbox'}
-                      readOnly
-                      checked={isSelected}
-                    />
-                )}
-                {this.props.optionValueDecorator(isObject ? option[displayValue] : (option || '').toString(), option)}
-              </li>
-            )}
-          )}
-				</React.Fragment>
-			)
-		});
+  
+    return Object.keys(groupedObject).map(obj => (
+      <React.Fragment key={obj}>
+        <li
+          className="groupHeading"
+          style={style['groupHeading']}
+          onClick={() => this.onSelectItem(obj)} // Handle group title click
+        >
+          {obj}
+        </li>
+        {groupedObject[obj].map((option, i) => {
+          const isSelected = this.isSelectedValue(option);
+          return (
+            <li
+              key={`option${i}`}
+              style={style['option']}
+              className={`groupChildEle option ${isSelected ? 'selected' : ''} ${this.fadeOutSelection(option) ? 'disableSelection' : ''} ${this.isDisablePreSelectedValues(option) ? 'disableSelection' : ''}`}
+              onClick={() => this.onSelectItem(option)}
+            >
+              {showCheckbox && !singleSelect && (
+                <input
+                  type="checkbox"
+                  readOnly
+                  className={`checkbox`}
+                  checked={isSelected}
+                />
+              )}
+              {this.props.optionValueDecorator(isObject ? option[displayValue] : (option || '').toString(), option)}
+            </li>
+          );
+        })}
+      </React.Fragment>
+    ));
   }
-
+  
   renderNormalOption() {
     const { isObject = false, displayValue, showCheckbox, style, singleSelect } = this.props;
     const { highlightOption } = this.state;

@@ -26,7 +26,7 @@ export default {
   decorators: [withKnobs]
 } as Meta;
 
-const Template: Story<IMultiselectProps> = (args) => <MultiSelect {...args} />;
+const Template: Story<IMultiselectProps> = (args) => <MultiSelect {...args}  />;
 
 export const FlatArray = Template.bind({});
 FlatArray.args = {
@@ -90,7 +90,8 @@ Grouping.args = {
   options,
   displayValue: 'key',
   showCheckbox: true,
-  groupBy: "cat"
+  groupBy: "cat",
+  groupSelectAll: true 
 };
 
 export const SelectionLimit = Template.bind({});
