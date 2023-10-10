@@ -317,7 +317,7 @@ export class Multiselect extends React.Component<IMultiselectProps, any> {
     }
   }
 
-// ... (existing code)
+
 
 onSelectItem(item) {
   const { isObject, displayValue, groupBy, singleSelect } = this.props;
